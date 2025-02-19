@@ -1,8 +1,15 @@
 package main
 
 import (
+	"context"
 	"github.com/Hana-bii/gorder-v2/common/config"
+	"github.com/Hana-bii/gorder-v2/common/genproto/orderpb"
+	"github.com/Hana-bii/gorder-v2/common/server"
+	"github.com/Hana-bii/gorder-v2/order/ports"
+	"github.com/Hana-bii/gorder-v2/order/service"
+	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
+	"google.golang.org/grpc"
 	"log"
 )
 
@@ -13,14 +20,24 @@ func init() {
 }
 
 func main() {
-	//log.Println("Listening :8082")
-	//mux := http.NewServeMux()
-	//mux.HandleFunc("/ping", func(w http.ResponseWriter, r *http.Request) {
-	//	log.Println("%v", r.RequestURI)
-	//	_, _ = io.WriteString(w, "pong")
-	//})
-	//if err := http.ListenAndServe(":8082", mux); err != nil {
-	//	log.Fatal(err)
-	//}
-	log.Println("%v", viper.Get("order"))
+	serviceName := viper.GetString("order.service-name")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	application := service.NewApplication(ctx)
+	// 丢入协程，防止阻塞HTTP服务
+	go server.RunGRPCServer(serviceName, func(server *grpc.Server) {
+		svc := ports.NewGRPCServer(application)
+		orderpb.RegisterOrderServiceServer(server, svc)
+	})
+
+	server.RunHTTPServer(serviceName, func(router *gin.Engine) {
+		ports.RegisterHandlersWithOptions(router, HTTPServer{app: application}, ports.GinServerOptions{
+			BaseURL:      "/api",
+			Middlewares:  nil,
+			ErrorHandler: nil,
+		})
+	})
+
 }
