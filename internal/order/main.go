@@ -8,14 +8,14 @@ import (
 	"github.com/Hana-bii/gorder-v2/order/ports"
 	"github.com/Hana-bii/gorder-v2/order/service"
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
-	"log"
 )
 
 func init() {
 	if err := config.NewViperConfig(); err != nil {
-		log.Fatal(err)
+		logrus.Fatal(err)
 	}
 }
 
