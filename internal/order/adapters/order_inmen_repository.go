@@ -33,6 +33,8 @@ func (m MemoryOrderRepository) Create(_ context.Context, order *domain.Order) (*
 }
 
 func (m MemoryOrderRepository) Get(_ context.Context, id, customerID string) (*domain.Order, error) {
+	logrus.Infof("store: %v", m.store)
+
 	m.lock.RLock()
 	defer m.lock.RUnlock()
 	for _, o := range m.store {
@@ -66,8 +68,16 @@ func (m MemoryOrderRepository) Update(ctx context.Context, order *domain.Order, 
 }
 
 func NewMemoryOrderRepository() *MemoryOrderRepository {
+	s := make([]*domain.Order, 0)
+	s = append(s, &domain.Order{
+		ID:          "fake-ID",
+		CustomerID:  "fake-customer-id",
+		Status:      "fake-status",
+		PaymentLink: "fake-payment-link",
+		Items:       nil,
+	})
 	return &MemoryOrderRepository{
-		store: make([]*domain.Order, 0),
+		store: s,
 		lock:  &sync.RWMutex{},
 	}
 }
