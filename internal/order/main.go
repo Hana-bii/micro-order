@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"github.com/Hana-bii/gorder-v2/common/config"
+	"github.com/Hana-bii/gorder-v2/common/discovery"
 	"github.com/Hana-bii/gorder-v2/common/genproto/orderpb"
 	"github.com/Hana-bii/gorder-v2/common/server"
 	"github.com/Hana-bii/gorder-v2/order/ports"
@@ -28,6 +29,15 @@ func main() {
 	// 主函数结束时close grpc conn
 	application, cleanup := service.NewApplication(ctx)
 	defer cleanup()
+
+	deregisterFunc, err := discovery.RegisterToConsul(ctx, serviceName)
+	if err != nil {
+		logrus.Fatal(err)
+	}
+	defer func() {
+		_ = deregisterFunc()
+	}()
+
 	// 丢入协程，防止阻塞HTTP服务
 	go server.RunGRPCServer(serviceName, func(server *grpc.Server) {
 		svc := ports.NewGRPCServer(application)
