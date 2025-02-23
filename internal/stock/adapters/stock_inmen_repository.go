@@ -19,6 +19,24 @@ var stub = map[string]*orderpb.Item{
 		Quantity: 10000,
 		PriceID:  "stub_item_price_id",
 	},
+	"item1": {
+		ID:       "item1",
+		Name:     "stub item1",
+		Quantity: 10000,
+		PriceID:  "stub_item1_price_id",
+	},
+	"item2": {
+		ID:       "item2",
+		Name:     "stub item2",
+		Quantity: 10000,
+		PriceID:  "stub_item2_price_id",
+	},
+	"item3": {
+		ID:       "item3",
+		Name:     "stub item3",
+		Quantity: 10000,
+		PriceID:  "stub_item3_price_id",
+	},
 }
 
 func (m MemoryStockRepository) GetItems(ctx context.Context, ids []string) ([]*orderpb.Item, error) {
