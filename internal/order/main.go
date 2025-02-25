@@ -5,6 +5,7 @@ import (
 	"github.com/Hana-bii/gorder-v2/common/config"
 	"github.com/Hana-bii/gorder-v2/common/discovery"
 	"github.com/Hana-bii/gorder-v2/common/genproto/orderpb"
+	"github.com/Hana-bii/gorder-v2/common/logging"
 	"github.com/Hana-bii/gorder-v2/common/server"
 	"github.com/Hana-bii/gorder-v2/order/ports"
 	"github.com/Hana-bii/gorder-v2/order/service"
@@ -15,6 +16,7 @@ import (
 )
 
 func init() {
+	logging.Init()
 	if err := config.NewViperConfig(); err != nil {
 		logrus.Fatal(err)
 	}
@@ -30,6 +32,7 @@ func main() {
 	application, cleanup := service.NewApplication(ctx)
 	defer cleanup()
 
+	// 注册Consul服务发现
 	deregisterFunc, err := discovery.RegisterToConsul(ctx, serviceName)
 	if err != nil {
 		logrus.Fatal(err)
