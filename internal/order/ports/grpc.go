@@ -51,6 +51,7 @@ func (G GRPCServer) UpdateOrder(ctx context.Context, request *orderpb.Order) (_ 
 		err = status.Error(codes.Internal, err.Error())
 		return
 	}
+	logrus.Infof("order_grpc || order=%v", order)
 	_, err = G.app.Commands.UpdateOrder.Handle(ctx, command.UpdateOrder{
 		Order: order,
 		UpdateFn: func(ctx context.Context, order *domain.Order) (*domain.Order, error) {

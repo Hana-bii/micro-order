@@ -2,11 +2,13 @@ package main
 
 import (
 	"context"
+	"github.com/Hana-bii/gorder-v2/common/broker"
 	"github.com/Hana-bii/gorder-v2/common/config"
 	"github.com/Hana-bii/gorder-v2/common/discovery"
 	"github.com/Hana-bii/gorder-v2/common/genproto/orderpb"
 	"github.com/Hana-bii/gorder-v2/common/logging"
 	"github.com/Hana-bii/gorder-v2/common/server"
+	"github.com/Hana-bii/gorder-v2/order/infrastructure/consumer"
 	"github.com/Hana-bii/gorder-v2/order/ports"
 	"github.com/Hana-bii/gorder-v2/order/service"
 	"github.com/gin-gonic/gin"
@@ -41,6 +43,18 @@ func main() {
 		_ = deregisterFunc()
 	}()
 
+	ch, closeCh := broker.Connect(
+		viper.GetString("rabbitmq.user"),
+		viper.GetString("rabbitmq.passwd"),
+		viper.GetString("rabbitmq.host"),
+		viper.GetString("rabbitmq.port"),
+	)
+	defer func() {
+		_ = closeCh()
+		_ = ch.Close()
+	}()
+	go consumer.NewConsumer(application).Listen(ch)
+
 	// 丢入协程，防止阻塞HTTP服务
 	go server.RunGRPCServer(serviceName, func(server *grpc.Server) {
 		svc := ports.NewGRPCServer(application)
@@ -48,6 +62,7 @@ func main() {
 	})
 
 	server.RunHTTPServer(serviceName, func(router *gin.Engine) {
+		router.StaticFile("/success", "../../public/success.html")
 		ports.RegisterHandlersWithOptions(router, HTTPServer{app: application}, ports.GinServerOptions{
 			BaseURL:      "/api",
 			Middlewares:  nil,

@@ -1,11 +1,13 @@
 package main
 
 import (
+	"context"
 	"github.com/Hana-bii/gorder-v2/common/broker"
 	"github.com/Hana-bii/gorder-v2/common/config"
 	"github.com/Hana-bii/gorder-v2/common/logging"
 	"github.com/Hana-bii/gorder-v2/common/server"
 	"github.com/Hana-bii/gorder-v2/payment/infrastructure/consumer"
+	"github.com/Hana-bii/gorder-v2/payment/service"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
@@ -18,7 +20,13 @@ func init() {
 }
 
 func main() {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	serverType := viper.GetString("payment.server-to-run")
+
+	application, cleanup := service.NewApplication(ctx)
+	defer cleanup()
 
 	// 连接消息队列
 	ch, closeCh := broker.Connect(
@@ -32,9 +40,9 @@ func main() {
 		_ = ch.Close()
 	}()
 
-	go consumer.NewConsumer().Listen(ch)
+	go consumer.NewConsumer(application).Listen(ch)
 
-	paymentHandler := NewPaymentHandler()
+	paymentHandler := NewPaymentHandler(ch)
 	switch serverType {
 	case "http":
 		server.RunHTTPServer(viper.GetString("payment.service-name"), paymentHandler.RegisterRoutes)

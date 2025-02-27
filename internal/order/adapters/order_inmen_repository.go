@@ -52,11 +52,14 @@ func (m *MemoryOrderRepository) Update(ctx context.Context, order *domain.Order,
 	m.lock.Lock()
 	defer m.lock.Unlock()
 	found := false
+	defer func() {
+		logrus.Infof("memory_order_repo || orderID=%s || found=%v", order.ID, found)
+	}()
 	for i, o := range m.store {
 		if o.ID == order.ID && o.CustomerID == order.CustomerID {
 			found = true
 			// 找到之后去更新
-			updatedOrder, err := updateFn(ctx, o)
+			updatedOrder, err := updateFn(ctx, order)
 			if err != nil {
 				return err
 			}

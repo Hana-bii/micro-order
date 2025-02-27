@@ -2,7 +2,9 @@ package order
 
 import (
 	"errors"
+	"fmt"
 	"github.com/Hana-bii/gorder-v2/common/genproto/orderpb"
+	"github.com/stripe/stripe-go/v81"
 )
 
 type Order struct {
@@ -20,7 +22,7 @@ func NewOrder(id, customerID, status, paymentLink string, items []*orderpb.Item)
 	if customerID == "" {
 		return nil, errors.New("empty customerID")
 	}
-	if status != "" {
+	if status == "" {
 		return nil, errors.New("empty status")
 	}
 	if items == nil {
@@ -43,4 +45,11 @@ func (o *Order) ToProto() *orderpb.Order {
 		PaymentLink: o.PaymentLink,
 		Items:       o.Items,
 	}
+}
+
+func (o *Order) IsPaid() error {
+	if o.Status == string(stripe.CheckoutSessionPaymentStatusPaid) {
+		return nil
+	}
+	return fmt.Errorf("order status not paid, order id = %s, status = %s", o.ID, o.Status)
 }
