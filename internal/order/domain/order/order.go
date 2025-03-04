@@ -3,19 +3,21 @@ package order
 import (
 	"errors"
 	"fmt"
-	"github.com/Hana-bii/gorder-v2/common/genproto/orderpb"
+	"github.com/Hana-bii/gorder-v2/order/entity"
+
 	"github.com/stripe/stripe-go/v81"
 )
 
+// Aggragete
 type Order struct {
 	ID          string
 	CustomerID  string
 	Status      string
 	PaymentLink string
-	Items       []*orderpb.Item
+	Items       []*entity.Item
 }
 
-func NewOrder(id, customerID, status, paymentLink string, items []*orderpb.Item) (*Order, error) {
+func NewOrder(id, customerID, status, paymentLink string, items []*entity.Item) (*Order, error) {
 	if id == "" {
 		return nil, errors.New("empty id")
 	}
@@ -35,16 +37,6 @@ func NewOrder(id, customerID, status, paymentLink string, items []*orderpb.Item)
 		PaymentLink: paymentLink,
 		Items:       items,
 	}, nil
-}
-
-func (o *Order) ToProto() *orderpb.Order {
-	return &orderpb.Order{
-		ID:          o.ID,
-		CustomerID:  o.CustomerID,
-		Status:      o.Status,
-		PaymentLink: o.PaymentLink,
-		Items:       o.Items,
-	}
 }
 
 func (o *Order) IsPaid() error {

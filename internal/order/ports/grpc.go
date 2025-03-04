@@ -2,6 +2,8 @@ package ports
 
 import (
 	"context"
+	"github.com/Hana-bii/gorder-v2/order/convertor"
+
 	"github.com/Hana-bii/gorder-v2/common/genproto/orderpb"
 	"github.com/Hana-bii/gorder-v2/order/app"
 	"github.com/Hana-bii/gorder-v2/order/app/command"
@@ -24,7 +26,7 @@ func NewGRPCServer(app app.Application) *GRPCServer {
 func (G GRPCServer) CreateOrder(ctx context.Context, request *orderpb.CreateOrderRequest) (*empty.Empty, error) {
 	_, err := G.app.Commands.CreateOrder.Handle(ctx, command.CreateOrder{
 		CustomerID: request.CustomerID,
-		Items:      request.Items,
+		Items:      convertor.NewItemWithQuantityConvertor().ProtosToEntities(request.Items),
 	})
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
@@ -40,23 +42,29 @@ func (G GRPCServer) GetOrder(ctx context.Context, request *orderpb.GetOrderReque
 	if err != nil {
 		return nil, status.Error(codes.NotFound, err.Error())
 	}
-	return o.ToProto(), nil
+	return convertor.NewOrderConvertor().EntityToProto(o), nil
 
 }
 
 func (G GRPCServer) UpdateOrder(ctx context.Context, request *orderpb.Order) (_ *empty.Empty, err error) {
-	logrus.Infof("order_grpc || request_in || request=%+v", request)
-	order, err := domain.NewOrder(request.ID, request.CustomerID, request.Status, request.PaymentLink, request.Items)
+	logrus.Infof("order_grpc || request_in || request=#{request}")
+	order, err := domain.NewOrder(
+		request.ID,
+		request.CustomerID,
+		request.Status,
+		request.PaymentLink,
+		convertor.NewItemConvertor().ProtosToEntities(request.Items),
+	)
 	if err != nil {
 		err = status.Error(codes.Internal, err.Error())
-		return
+		return nil, err
 	}
-	logrus.Infof("order_grpc || order=%v", order)
+	logrus.Infof("order_grpc || order=#{order}")
 	_, err = G.app.Commands.UpdateOrder.Handle(ctx, command.UpdateOrder{
 		Order: order,
 		UpdateFn: func(ctx context.Context, order *domain.Order) (*domain.Order, error) {
 			return order, nil
 		},
 	})
-	return
+	return nil, err
 }

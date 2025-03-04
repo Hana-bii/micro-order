@@ -3,6 +3,11 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"go.opentelemetry.io/otel"
+	"io"
+	"net/http"
+
 	"github.com/Hana-bii/gorder-v2/common/broker"
 	"github.com/Hana-bii/gorder-v2/common/genproto/orderpb"
 	"github.com/Hana-bii/gorder-v2/payment/domain"
@@ -12,8 +17,6 @@ import (
 	"github.com/spf13/viper"
 	"github.com/stripe/stripe-go/v81"
 	"github.com/stripe/stripe-go/v81/webhook"
-	"io"
-	"net/http"
 )
 
 type PaymentHandler struct {
@@ -82,10 +85,16 @@ func (p *PaymentHandler) handleWebhook(c *gin.Context) {
 				return
 			}
 
-			_ = p.channel.PublishWithContext(ctx, broker.EventOrderPaid, "", false, false, amqp.Publishing{
+			tr := otel.Tracer("rabbitmq")
+			mqCtx, span := tr.Start(ctx, fmt.Sprintf("rabbitmq.%s.publish", broker.EventOrderPaid))
+			defer span.End()
+
+			headers := broker.InjectRabbitMQHeaders(mqCtx)
+			_ = p.channel.PublishWithContext(mqCtx, broker.EventOrderPaid, "", false, false, amqp.Publishing{
 				ContentType:  "application/json",
 				DeliveryMode: amqp.Persistent,
 				Body:         marshalledOrder,
+				Headers:      headers,
 			})
 			logrus.Infof("message pulished to %s, body: %s", broker.EventOrderPaid, string(marshalledOrder))
 		}

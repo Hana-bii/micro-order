@@ -2,11 +2,12 @@ package adapters
 
 import (
 	"context"
-	domain "github.com/Hana-bii/gorder-v2/order/domain/order"
-	"github.com/sirupsen/logrus"
 	"strconv"
 	"sync"
 	"time"
+
+	domain "github.com/Hana-bii/gorder-v2/order/domain/order"
+	"github.com/sirupsen/logrus"
 )
 
 type MemoryOrderRepository struct {

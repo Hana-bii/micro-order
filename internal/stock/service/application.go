@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+
 	"github.com/Hana-bii/gorder-v2/common/metrics"
 	"github.com/Hana-bii/gorder-v2/stock/adapters"
 	"github.com/Hana-bii/gorder-v2/stock/app"

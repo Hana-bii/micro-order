@@ -2,6 +2,7 @@ package query
 
 import (
 	"context"
+
 	"github.com/Hana-bii/gorder-v2/common/decorator"
 	"github.com/Hana-bii/gorder-v2/common/genproto/orderpb"
 	domain "github.com/Hana-bii/gorder-v2/stock/domain/stock"
@@ -44,14 +45,14 @@ func (c checkIfItemsInStockHandler) Handle(ctx context.Context, query CheckIfIte
 	var res []*orderpb.Item
 	for _, item := range query.Items {
 		// TODO: 改成从数据库 or Stripe 获取
-		priceId, ok := stub[item.ID]
+		priceID, ok := stub[item.ID]
 		if !ok {
-			priceId = stub["1"]
+			priceID = stub["1"]
 		}
 		res = append(res, &orderpb.Item{
 			ID:       item.ID,
 			Quantity: item.Quantity,
-			PriceID:  priceId,
+			PriceID:  priceID,
 		})
 	}
 	return res, nil

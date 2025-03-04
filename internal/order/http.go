@@ -2,10 +2,12 @@ package main
 
 import (
 	"fmt"
-	"github.com/Hana-bii/gorder-v2/common/genproto/orderpb"
+	client "github.com/Hana-bii/gorder-v2/common/client/order"
+	"github.com/Hana-bii/gorder-v2/common/tracing"
 	"github.com/Hana-bii/gorder-v2/order/app"
 	"github.com/Hana-bii/gorder-v2/order/app/command"
 	"github.com/Hana-bii/gorder-v2/order/app/query"
+	"github.com/Hana-bii/gorder-v2/order/convertor"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -15,14 +17,17 @@ type HTTPServer struct {
 }
 
 func (H HTTPServer) PostCustomerCustomerIDOrders(c *gin.Context, customerID string) {
-	var req orderpb.CreateOrderRequest
+	ctx, span := tracing.Start(c, "PostCustomerCustomerIDOrders")
+	defer span.End()
+
+	var req client.CreateOrderRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	r, err := H.app.Commands.CreateOrder.Handle(c, command.CreateOrder{
+	r, err := H.app.Commands.CreateOrder.Handle(ctx, command.CreateOrder{
 		CustomerID: req.CustomerID,
-		Items:      req.Items,
+		Items:      convertor.NewItemWithQuantityConvertor().ClientsToEntities(req.Items),
 	})
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"error": err})
@@ -30,6 +35,7 @@ func (H HTTPServer) PostCustomerCustomerIDOrders(c *gin.Context, customerID stri
 	}
 	c.JSON(http.StatusOK, gin.H{
 		"message":      "success",
+		"trace_id":     tracing.TraceID(ctx),
 		"customer_id":  req.CustomerID,
 		"order_id":     r.OrderID,
 		"redirect_url": fmt.Sprintf("http://localhost:8282/success?customerID=%s&orderID=%s", req.CustomerID, r.OrderID),
@@ -37,7 +43,9 @@ func (H HTTPServer) PostCustomerCustomerIDOrders(c *gin.Context, customerID stri
 }
 
 func (H HTTPServer) GetCustomerCustomerIDOrdersOrderID(c *gin.Context, customerID string, orderID string) {
-	o, err := H.app.Queries.GetCustomerOrder.Handle(c, query.GetCustomerOrder{
+	ctx, span := tracing.Start(c, "GetCustomerCustomerIDOrdersOrderID")
+	defer span.End()
+	o, err := H.app.Queries.GetCustomerOrder.Handle(ctx, query.GetCustomerOrder{
 		CustomerID: customerID,
 		OrderID:    orderID,
 	})
@@ -46,7 +54,8 @@ func (H HTTPServer) GetCustomerCustomerIDOrdersOrderID(c *gin.Context, customerI
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{
-		"message": "success",
+		"message":  "success",
+		"trace_id": tracing.TraceID(ctx),
 		"data": gin.H{
 			"Order": o,
 		},
