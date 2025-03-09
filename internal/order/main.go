@@ -5,7 +5,7 @@ import (
 	"github.com/Hana-bii/gorder-v2/common/tracing"
 
 	"github.com/Hana-bii/gorder-v2/common/broker"
-	"github.com/Hana-bii/gorder-v2/common/config"
+	_ "github.com/Hana-bii/gorder-v2/common/config"
 	"github.com/Hana-bii/gorder-v2/common/discovery"
 	"github.com/Hana-bii/gorder-v2/common/genproto/orderpb"
 	"github.com/Hana-bii/gorder-v2/common/logging"
@@ -21,9 +21,6 @@ import (
 
 func init() {
 	logging.Init()
-	if err := config.NewViperConfig(); err != nil {
-		logrus.Fatal(err)
-	}
 }
 
 func main() {
@@ -51,6 +48,7 @@ func main() {
 		_ = deregisterFunc()
 	}()
 
+	// 此ch用于
 	ch, closeCh := broker.Connect(
 		viper.GetString("rabbitmq.user"),
 		viper.GetString("rabbitmq.passwd"),

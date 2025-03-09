@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/Hana-bii/gorder-v2/common/tracing"
 
-	"github.com/Hana-bii/gorder-v2/common/config"
+	_ "github.com/Hana-bii/gorder-v2/common/config"
 	"github.com/Hana-bii/gorder-v2/common/discovery"
 	"github.com/Hana-bii/gorder-v2/common/genproto/stockpb"
 	"github.com/Hana-bii/gorder-v2/common/logging"
@@ -18,9 +18,6 @@ import (
 
 func init() {
 	logging.Init()
-	if err := config.NewViperConfig(); err != nil {
-		logrus.Fatal(err)
-	}
 }
 
 func main() {
